@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.30;
+pragma solidity ^0.8.29;
 
 import {ISignatureUtils} from "eigenlayer-contracts/interfaces/ISignatureUtils.sol";
 import {IAVSDirectory} from "eigenlayer-contracts/interfaces/IAVSDirectory.sol";
