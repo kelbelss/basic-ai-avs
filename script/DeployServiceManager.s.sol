@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.30;
+pragma solidity ^0.8.29;
 
 import {Script} from "forge-std/Script.sol";
-import {MyServiceManager} from "../src/ServiceManager.sol";
+import {ServiceManager} from "../src/ServiceManager.sol";
 import {IDelegationManager} from "eigenlayer-contracts/interfaces/IDelegationManager.sol";
 import {AVSDirectory} from "eigenlayer-contracts/core/AVSDirectory.sol";
 import {ISignatureUtils} from "eigenlayer-contracts/interfaces/ISignatureUtils.sol";
@@ -35,10 +35,10 @@ contract DeployServiceManager is Script {
         // register as an operator on EigenLayer before they can register with AVS - done through del manager, pull up live instance on chain of delegation manager
         IDelegationManager delegationManager = IDelegationManager(DELEGATION_MANAGER);
         // set operator details using struct
-        IDelegationManager.OperatorDetails memory operatorDetails = IDelagationManager.OperatorDetails({
-            earningsReceiver: operator, // where the operator wants to revcive rewards
+        IDelegationManager.OperatorDetails memory operatorDetails = IDelegationManager.OperatorDetails({
+            __deprecated_earningsReceiver: address(0), // not needed
             delegationApprover: address(0), // not needed
-            stakerOptOutWindowsBlocks: 0 // not needed
+            stakerOptOutWindowBlocks: 0 // not needed
         });
 
         vm.startBroadcast(operator);
