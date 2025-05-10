@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.29;
 
-import {ISignatureUtils} from "eigenlayer-contracts/interfaces/ISignatureUtils.sol";
-import {IAVSDirectory} from "eigenlayer-contracts/interfaces/IAVSDirectory.sol";
+import {ISignatureUtils} from "eigenlayer-middleware/src/contracts/interfaces/ISignatureUtils.sol";
+import {IAVSDirectory} from "eigenlayer-middleware/src/contracts/interfaces/IAVSDirectory.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 
 contract ServiceManager {

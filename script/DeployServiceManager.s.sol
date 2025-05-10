@@ -4,24 +4,23 @@ pragma solidity ^0.8.29;
 import {Script} from "forge-std/Script.sol";
 import {StdCheats} from "forge-std/StdCheats.sol";
 import {ServiceManager} from "../src/ServiceManager.sol";
-import {IDelegationManager} from "eigenlayer-contracts/interfaces/IDelegationManager.sol";
-import {AVSDirectory} from "eigenlayer-contracts/core/AVSDirectory.sol";
-import {ISignatureUtils} from "eigenlayer-contracts/interfaces/ISignatureUtils.sol";
-import {IStrategyManager} from "eigenlayer-contracts/interfaces/IStrategyManager.sol";
-import {IStrategy} from "eigenlayer-contracts/interfaces/IStrategyManager.sol";
+import {IDelegationManager} from "eigenlayer-middleware/src/contracts/interfaces/IDelegationManager.sol";
+import {AVSDirectory} from "eigenlayer-middleware/src/contracts/core/AVSDirectory.sol";
+import {ISignatureUtils} from "eigenlayer-middleware/src/contracts/interfaces/ISignatureUtils.sol";
+import {IStrategyManager, IStrategy} from "eigenlayer-middleware/src/contracts/interfaces/IStrategyManager.sol";
 import {IERC20} from "lib/eigenlayer-middleware/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract DeployServiceManager is Script, StdCheats {
     // set up, deploy, register
 
     // Eigen Core Contracts Mainnet
-    address internal constant AVS_DIRECTORY = 0x135DDa560e946695d6f155dACaFC6f1F25C1F5AF;
-    address internal constant DELEGATION_MANAGER = 0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A;
-    address internal constant STRATEGY_MANAGER = 0x858646372CC42E1A627fcE94aa7A7033e7CF075A;
+    address internal constant AVS_DIRECTORY = 0xA1585A624E8B7da1c15D16B007FA5a2A4504681D;
+    address internal constant DELEGATION_MANAGER = 0x750954a384174dF80446D97eBbCaE6E1A084DE6E;
+    address internal constant STRATEGY_MANAGER = 0xb305dd46bf78210b54A903238CA4e799a39687C1;
 
     // TODO: research more
-    IERC20 constant WSTETH_TOKEN = IERC20(0x7F39C581F595B53c5CBbb5b4eaeC7062C09d04f0); // wstETH token
-    IStrategy constant WSTETH_STRAT = IStrategy(0x28c42De479E57cc0c90B8A3EcEb406dc173aD7cC); // wstETH strategy
+    IERC20 constant WSTETH_TOKEN = IERC20(0x8d09a4502Cc8Cf1547aD300E066060D043f6982D); // wstETH Holesky
+    IStrategy constant WSTETH_STRAT = IStrategy(0x296d39557dEE4F13155Bcb1D2C4ea243330020EA); // wstETH strategy
 
     uint256 internal constant FAUCET_AMOUNT = 0.1 ether; // 0.1 wstETH
 
@@ -35,8 +34,8 @@ contract DeployServiceManager is Script, StdCheats {
         deployer = vm.rememberKey(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         operator = vm.rememberKey(vm.envUint("OPERATOR_PRIVATE_KEY"));
 
-        // give the operator some stETH while running on a local fork
-        if (block.chainid == 31337) {
+        // give the operator some wstETH while running on a local fork
+        if (block.chainid == 31337 || block.chainid == 17000) {
             // StdCheats.deal(token, to, amount, adjustTotalSupply?)
             deal(address(WSTETH_TOKEN), operator, FAUCET_AMOUNT, true);
         }
