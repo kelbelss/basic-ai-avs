@@ -11,7 +11,7 @@ contract ServiceManagerUnitTest is Test {
     MockAVSDirectory mockAvs;
     ServiceManager serviceManager;
 
-    address operator = makeAddr("operator");
+    address operator = vm.addr(1);
 
     function setUp() public {
         // deploy mock directory and ServiceManager under test
@@ -79,10 +79,10 @@ contract ServiceManagerUnitTest is Test {
         // prepare signature: sign keccak256(isSafe, contents)
         bool isSafe = true;
         bytes32 messageHash = keccak256(abi.encodePacked(isSafe, contents));
-        // bytes32 ethHash = ECDSA.toEthSignedMessageHash(messageHash);
+        bytes32 ethHash = ECDSA.toEthSignedMessageHash(messageHash);
 
         // sign with operators key index 1
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, messageHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, ethHash);
         bytes memory sig = abi.encodePacked(r, s, v);
 
         // respond to task as operator
