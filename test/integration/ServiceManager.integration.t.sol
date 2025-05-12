@@ -2,28 +2,17 @@
 pragma solidity ^0.8.29;
 
 import {Test, console} from "forge-std/Test.sol";
-import {ServiceManager} from "../src/ServiceManager.sol";
+import {ServiceManager} from "../../src/ServiceManager.sol";
 
 // Core EigenLayer contracts & interfaces
+import {IntegrationBase} from "IntegrationBase.t.sol";
 import {IDelegationManager} from "eigenlayer-contracts/src/contracts/interfaces/IDelegationManager.sol";
 import {IStrategyManager, IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 import {AVSDirectory} from "eigenlayer-contracts/src/contracts/core/AVSDirectory.sol";
 import {IERC20} from "eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/contracts/token/ERC20/IERC20.sol";
 import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 
-contract ServiceManagerIntegrationTest is Test {
-    uint256 constant FAUCET_AMOUNT = 1 ether;
-    address constant AVS_DIRECTORY = 0x055733000064333CaDDbC92763c58BF0192fFeBf; // Holesky AVSDirectory
-    address constant DELEGATION_MANAGER = 0xA44151489861Fe9e3055d95adC98FbD462B948e7; // Holesky DelegationManager
-    address constant STRATEGY_MANAGER = 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6; // Holesky StrategyManager
-    IERC20 constant STETH_TOKEN = IERC20(0x3F1c547b21f65e10480dE3ad8E19fAAC46C95034);
-    IStrategy constant STETH_STRAT = IStrategy(0x7D704507b76571a51d9caE8AdDAbBFd0ba0e63d3);
-    address constant STETH_WHALE = 0xbf2a35956c1FE31139FbE625b576Cd0A5e3DB05A;
-
-    ServiceManager serviceManager;
-
-    address OPERATOR = makeAddr("operator");
-
+contract ServiceManagerIntegrationTest is IntegrationBase {
     function setUp() public {
         // 1) fork Holesky
         vm.createSelectFork("holesky");

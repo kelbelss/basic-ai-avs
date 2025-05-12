@@ -7,7 +7,7 @@ import {ServiceManager} from "../src/ServiceManager.sol";
 
 contract DeployServiceManager is Script {
     function run() external {
-        // Load your deployer key and the directory address from environment variables
+        
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address avsDirectory = vm.envAddress("AVS_DIRECTORY");
 
