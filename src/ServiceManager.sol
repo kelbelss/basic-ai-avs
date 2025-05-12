@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.29;
 
-import {ISignatureUtils} from "eigenlayer-middleware/src/contracts/interfaces/ISignatureUtils.sol";
-import {IAVSDirectory} from "eigenlayer-middleware/src/contracts/interfaces/IAVSDirectory.sol";
+import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
+import {IAVSDirectory} from "eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 
 contract ServiceManager {
@@ -41,7 +41,7 @@ contract ServiceManager {
     // register operator - IAVSDirectory will register operator to this AVS
     function registerOperatorToAVS(
         address operator,
-        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry memory operatorSignature
     ) external {
         IAVSDirectory(avsDirectory).registerOperatorToAVS(operator, operatorSignature);
         operatorRegistered[operator] = true;

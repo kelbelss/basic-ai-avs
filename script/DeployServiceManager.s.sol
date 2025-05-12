@@ -2,43 +2,45 @@
 pragma solidity ^0.8.29;
 
 import {Script} from "forge-std/Script.sol";
-import {StdCheats} from "forge-std/StdCheats.sol";
+import {console} from "forge-std/console.sol";
 import {ServiceManager} from "../src/ServiceManager.sol";
-import {IDelegationManager} from "eigenlayer-middleware/src/contracts/interfaces/IDelegationManager.sol";
-import {AVSDirectory} from "eigenlayer-middleware/src/contracts/core/AVSDirectory.sol";
-import {ISignatureUtils} from "eigenlayer-middleware/src/contracts/interfaces/ISignatureUtils.sol";
-import {IStrategyManager, IStrategy} from "eigenlayer-middleware/src/contracts/interfaces/IStrategyManager.sol";
-import {IERC20} from "lib/eigenlayer-middleware/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IDelegationManager} from "eigenlayer-contracts/src/contracts/interfaces/IDelegationManager.sol";
+import {AVSDirectory} from "eigenlayer-contracts/src/contracts/core/AVSDirectory.sol";
+import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
+import {IStrategyManager, IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
+import {IERC20} from "eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/contracts/token/ERC20/IERC20.sol";
 
-contract DeployServiceManager is Script, StdCheats {
+// TODO remove
+import "forge-std/Test.sol";
+
+contract DeployServiceManager is Script {
     // set up, deploy, register
 
-    // Eigen Core Contracts Mainnet
-    address internal constant AVS_DIRECTORY = 0xA1585A624E8B7da1c15D16B007FA5a2A4504681D;
-    address internal constant DELEGATION_MANAGER = 0x750954a384174dF80446D97eBbCaE6E1A084DE6E;
-    address internal constant STRATEGY_MANAGER = 0xb305dd46bf78210b54A903238CA4e799a39687C1;
+    // Eigen Core Contracts Holesky
+    address internal constant AVS_DIRECTORY = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
+    address internal constant DELEGATION_MANAGER = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
+    address internal constant STRATEGY_MANAGER = 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6;
 
     // TODO: research more
-    IERC20 constant WSTETH_TOKEN = IERC20(0x8d09a4502Cc8Cf1547aD300E066060D043f6982D); // wstETH Holesky
-    IStrategy constant WSTETH_STRAT = IStrategy(0x296d39557dEE4F13155Bcb1D2C4ea243330020EA); // wstETH strategy
+    IERC20 constant STETH_TOKEN = IERC20(0x3F1c547b21f65e10480dE3ad8E19fAAC46C95034); // stETH Holesky
+    IStrategy constant STETH_STRAT = IStrategy(0x7D704507b76571a51d9caE8AdDAbBFd0ba0e63d3); // stETH strategy
 
-    uint256 internal constant FAUCET_AMOUNT = 0.1 ether; // 0.1 wstETH
+    uint256 internal constant FAUCET_AMOUNT = 1 ether; // 1 stETH
+    address constant STETH_WHALE = 0xbf2a35956c1FE31139FbE625b576Cd0A5e3DB05A; // Holesky stETH holder
 
     address internal deployer;
     address internal operator;
     ServiceManager serviceManager;
 
-    // setup
     function setUp() public {
         // test vm.rememberKey
         deployer = vm.rememberKey(vm.envUint("DEPLOYER_PRIVATE_KEY"));
         operator = vm.rememberKey(vm.envUint("OPERATOR_PRIVATE_KEY"));
 
-        // give the operator some wstETH while running on a local fork
-        if (block.chainid == 31337 || block.chainid == 17000) {
-            // StdCheats.deal(token, to, amount, adjustTotalSupply?)
-            deal(address(WSTETH_TOKEN), operator, FAUCET_AMOUNT, true);
-        }
+        // give the operator some stETH while running on a local fork
+        vm.startPrank(STETH_WHALE);
+        STETH_TOKEN.transfer(operator, FAUCET_AMOUNT);
+        vm.stopPrank();
     }
 
     function run() public {
@@ -47,24 +49,17 @@ contract DeployServiceManager is Script, StdCheats {
         serviceManager = new ServiceManager(AVS_DIRECTORY);
         vm.stopBroadcast();
 
-        // operator deposits stETH into the strategy
-        IStrategyManager strategyManager = IStrategyManager(STRATEGY_MANAGER);
+        // operator deposits stETH into the strategy - in order to delegate to himself on registration
         vm.startBroadcast(operator);
-        WSTETH_TOKEN.approve(STRATEGY_MANAGER, FAUCET_AMOUNT);
-        strategyManager.depositIntoStrategy(WSTETH_STRAT, WSTETH_TOKEN, FAUCET_AMOUNT);
+        STETH_TOKEN.approve(STRATEGY_MANAGER, FAUCET_AMOUNT);
+        IStrategyManager(STRATEGY_MANAGER).depositIntoStrategy(STETH_STRAT, STETH_TOKEN, FAUCET_AMOUNT);
         vm.stopBroadcast();
 
         // register as an operator on EigenLayer before they can register with AVS - done through del manager, pull up live instance on chain of delegation manager
         IDelegationManager delegationManager = IDelegationManager(DELEGATION_MANAGER);
-        // set operator details using struct
-        IDelegationManager.OperatorDetails memory operatorDetails = IDelegationManager.OperatorDetails({
-            __deprecated_earningsReceiver: operator, // not needed
-            delegationApprover: address(0), // not needed
-            stakerOptOutWindowBlocks: 0 // not needed
-        });
 
         vm.startBroadcast(operator);
-        delegationManager.registerAsOperator(operatorDetails, ""); // has to have a positive balance to register
+        delegationManager.registerAsOperator(operator, 1, ""); // has to have a positive balance to register
         vm.stopBroadcast();
 
         // register operator to this AVS
@@ -83,8 +78,8 @@ contract DeployServiceManager is Script, StdCheats {
         // create signature string
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature =
-            ISignatureUtils.SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry memory operatorSignature =
+            ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry({signature: signature, salt: salt, expiry: expiry});
 
         vm.startBroadcast(operator);
         serviceManager.registerOperatorToAVS(operator, operatorSignature);
