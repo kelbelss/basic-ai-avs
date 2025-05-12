@@ -16,6 +16,10 @@ import {ISignatureUtilsMixinTypes} from
     "../../lib/eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 
 contract ServiceManagerIntegrationTest is IntegrationBase {
+    function setUp() public override {
+        super.setUp();
+    }
+
     function testEndToEndRegistration() public {
         vm.startPrank(operator);
 

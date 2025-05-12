@@ -4,7 +4,7 @@ pragma solidity ^0.8.29;
 import "forge-std/Test.sol";
 import "../../src/ServiceManager.sol";
 import {MockAVSDirectory} from "./mocks/MockAVSDirectory.sol";
-import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
+import {ISignatureUtilsMixinTypes} from "../../eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 
 contract ServiceManagerUnitTest is Test {
@@ -79,10 +79,10 @@ contract ServiceManagerUnitTest is Test {
         // prepare signature: sign keccak256(isSafe, contents)
         bool isSafe = true;
         bytes32 messageHash = keccak256(abi.encodePacked(isSafe, contents));
-        bytes32 ethSigned = ECDSA.toEthSignedMessageHash(messageHash);
+        // bytes32 ethHash = ECDSA.toEthSignedMessageHash(messageHash);
 
         // sign with operators key index 1
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, ethSigned);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, messageHash);
         bytes memory sig = abi.encodePacked(r, s, v);
 
         // respond to task as operator

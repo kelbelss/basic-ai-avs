@@ -11,7 +11,7 @@ import {
 } from "../../lib/eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 import {IERC20} from "../../lib/eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/contracts/token/ERC20/IERC20.sol";
 
-abstract contract IntegrationBase is Test {
+contract IntegrationBase is Test {
     string HOLESKY_RPC = vm.envString("HOLESKY_RPC_URL");
     address AVS_DIRECTORY = vm.envAddress("AVS_DIRECTORY");
     address DELEGATION_MANAGER = vm.envAddress("DELEGATION_MANAGER");
@@ -20,15 +20,18 @@ abstract contract IntegrationBase is Test {
     IStrategy STETH_STRAT = IStrategy(vm.envAddress("STETH_STRAT"));
     address STETH_WHALE = vm.envAddress("STETH_WHALE");
 
-    uint256 FAUCET_AMOUNT = 1e18;
+    uint256 FAUCET_AMOUNT = 1e17; // 0.1 stETH
 
     ServiceManager serviceManager;
 
-    address operator = makeAddr("operator");
+    address operator = vm.addr(1);
 
-    function setUp() public {
+    function setUp() public virtual {
         // 1) fork Holesky
         vm.createSelectFork(HOLESKY_RPC, /*block*/ block.number);
+
+        // 2) fund the operator with some eth
+        vm.deal(operator, 1e18); // 1 eth
 
         // 2) get some stETH for your operator
         vm.startPrank(STETH_WHALE);

@@ -68,16 +68,16 @@ contract ServiceManager {
     }
 
     // respond to task
-    function respondToTask(Task calldata task, uint32 referenceTaskIndex, bytes memory signature, bool isSafe)
+    function respondToTask(Task calldata task, uint32 taskIndex, bytes memory signature, bool isSafe)
         external
         onlyRegisteredOperator
     {
         // check that task is valid, hasnt been responded to yet
         require(
-            keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
+            keccak256(abi.encode(task)) == allTaskHashes[taskIndex],
             "task given does not match the task in the contract"
         );
-        require(allTaskResponses[msg.sender][referenceTaskIndex].length == 0, "task already responded to");
+        require(allTaskResponses[msg.sender][taskIndex].length == 0, "task already responded to");
         // require(block.number <= task.taskCreatedBlock + 100, "task expired");
 
         // the message that was signed
@@ -90,8 +90,8 @@ contract ServiceManager {
         } // check gas cost and change to require
 
         // update storage with task response
-        allTaskResponses[msg.sender][referenceTaskIndex] = signature;
+        allTaskResponses[msg.sender][taskIndex] = signature;
 
-        emit TaskResponsed(referenceTaskIndex, task, isSafe, msg.sender);
+        emit TaskResponsed(taskIndex, task, isSafe, msg.sender);
     }
 }
