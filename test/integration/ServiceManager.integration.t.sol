@@ -16,39 +16,15 @@ import {ISignatureUtilsMixinTypes} from
     "../../lib/eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 
 contract ServiceManagerIntegrationTest is IntegrationBase {
-    function setUp() public {
-        // 1) fork Holesky
-        vm.createSelectFork("holesky");
-
-        // 2) get some stETH for your operator
-        vm.startPrank(STETH_WHALE);
-        STETH_TOKEN.transfer(OPERATOR, FAUCET_AMOUNT);
-        vm.stopPrank();
-
-        // 3) operator deposits into the strategy so they can register
-        vm.startPrank(OPERATOR);
-        STETH_TOKEN.approve(STRATEGY_MANAGER, FAUCET_AMOUNT);
-        IStrategyManager(STRATEGY_MANAGER).depositIntoStrategy(STETH_STRAT, STETH_TOKEN, FAUCET_AMOUNT);
-        vm.stopPrank();
-
-        // 4) operator registers with EigenLayer
-        vm.startPrank(OPERATOR);
-        IDelegationManager(DELEGATION_MANAGER).registerAsOperator(OPERATOR, 1, "");
-        vm.stopPrank();
-
-        // 5) deploy AVS ServiceManager pointing at the real AVSDirectory
-        serviceManager = new ServiceManager(AVS_DIRECTORY);
-    }
-
     function testEndToEndRegistration() public {
-        vm.startPrank(OPERATOR);
+        vm.startPrank(operator);
 
         // compute salt & expiry
-        bytes32 salt = keccak256(abi.encodePacked(block.timestamp, OPERATOR));
+        bytes32 salt = keccak256(abi.encodePacked(block.timestamp, operator));
         uint256 expiry = block.timestamp + 1 days;
 
         AVSDirectory avs = AVSDirectory(AVS_DIRECTORY);
-        bytes32 digest = avs.calculateOperatorAVSRegistrationDigestHash(OPERATOR, address(serviceManager), salt, expiry);
+        bytes32 digest = avs.calculateOperatorAVSRegistrationDigestHash(operator, address(serviceManager), salt, expiry);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(vm.envUint("OPERATOR_PRIVATE_KEY"), digest);
         bytes memory sig = abi.encodePacked(r, s, v);
@@ -57,11 +33,11 @@ contract ServiceManagerIntegrationTest is IntegrationBase {
             ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry({signature: sig, salt: salt, expiry: expiry});
 
         // call into your contract
-        serviceManager.registerOperatorToAVS(OPERATOR, signature);
+        serviceManager.registerOperatorToAVS(operator, signature);
         vm.stopPrank();
 
         // assert your state change
-        assertTrue(serviceManager.operatorRegistered(OPERATOR), "operator should be marked as registered");
+        assertTrue(serviceManager.operatorRegistered(operator), "operator should be marked as registered");
     }
 }
 

@@ -12,7 +12,7 @@ import {
 import {IERC20} from "../../lib/eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/contracts/token/ERC20/IERC20.sol";
 
 abstract contract IntegrationBase is Test {
-    tring HOLESKY_RPC = vm.envString("HOLESKY_RPC_URL");
+    string HOLESKY_RPC = vm.envString("HOLESKY_RPC_URL");
     address AVS_DIRECTORY = vm.envAddress("AVS_DIRECTORY");
     address DELEGATION_MANAGER = vm.envAddress("DELEGATION_MANAGER");
     address STRATEGY_MANAGER = vm.envAddress("STRATEGY_MANAGER");
@@ -20,9 +20,11 @@ abstract contract IntegrationBase is Test {
     IStrategy STETH_STRAT = IStrategy(vm.envAddress("STETH_STRAT"));
     address STETH_WHALE = vm.envAddress("STETH_WHALE");
 
+    uint256 FAUCET_AMOUNT = 1e18;
+
     ServiceManager serviceManager;
 
-    address OPERATOR = makeAddr("operator");
+    address operator = makeAddr("operator");
 
     function setUp() public {
         // 1) fork Holesky
@@ -30,16 +32,16 @@ abstract contract IntegrationBase is Test {
 
         // 2) get some stETH for your operator
         vm.startPrank(STETH_WHALE);
-        STETH_TOKEN.transfer(OPERATOR, FAUCET_AMOUNT);
+        STETH_TOKEN.transfer(operator, FAUCET_AMOUNT);
         vm.stopPrank();
 
         // 3) operator deposits into the strategy so they can register
-        vm.startPrank(OPERATOR);
+        vm.startPrank(operator);
         STETH_TOKEN.approve(STRATEGY_MANAGER, FAUCET_AMOUNT);
         IStrategyManager(STRATEGY_MANAGER).depositIntoStrategy(STETH_STRAT, STETH_TOKEN, FAUCET_AMOUNT);
 
         // 4) operator registers with EigenLayer
-        IDelegationManager(DELEGATION_MANAGER).registerAsOperator(OPERATOR, 1, "");
+        IDelegationManager(DELEGATION_MANAGER).registerAsOperator(operator, 1, "");
         vm.stopPrank();
 
         // 5) deploy AVS ServiceManager pointing at the real AVSDirectory
