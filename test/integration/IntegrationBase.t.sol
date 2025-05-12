@@ -5,9 +5,11 @@ import {Test, console} from "forge-std/Test.sol";
 import {ServiceManager} from "../../src/ServiceManager.sol";
 
 // Core EigenLayer contracts & interfaces
-import {IDelegationManager} from "eigenlayer-contracts/src/contracts/interfaces/IDelegationManager.sol";
-import {IStrategyManager, IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
-import {IERC20} from "eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/contracts/token/ERC20/IERC20.sol";
+import {IDelegationManager} from "../../lib/eigenlayer-contracts/src/contracts/interfaces/IDelegationManager.sol";
+import {
+    IStrategyManager, IStrategy
+} from "../../lib/eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
+import {IERC20} from "../../lib/eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/contracts/token/ERC20/IERC20.sol";
 
 abstract contract IntegrationBase is Test {
     tring HOLESKY_RPC = vm.envString("HOLESKY_RPC_URL");

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.29;
 
-import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
+import {ISignatureUtilsMixinTypes} from
+    "../../../lib/eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 
 /// @dev Only implements the subset of IAVSDirectory that ServiceManager uses.
 interface IAVSDirectory {
