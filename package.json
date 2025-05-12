@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "create": "node --loader ts-node/esm createTask.ts",
+    "respond": "node --loader ts-node/esm respondToTask.ts"
+  },
+  "dependencies": {
+    "viem": "^2.29.2",
+    "dotenv": "^16.4.5",
+    "ollama": "^0.5.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
