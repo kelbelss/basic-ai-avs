@@ -4,7 +4,8 @@ pragma solidity ^0.8.29;
 import "forge-std/Test.sol";
 import "../../src/ServiceManager.sol";
 import {MockAVSDirectory} from "./mocks/MockAVSDirectory.sol";
-import {ISignatureUtilsMixinTypes} from "../../eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
+import {ISignatureUtilsMixinTypes} from
+    "../../lib/eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 
 contract ServiceManagerUnitTest is Test {

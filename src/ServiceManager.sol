@@ -4,15 +4,23 @@ pragma solidity ^0.8.29;
 import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {IAVSDirectory} from "eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
+import {IStrategyManager, IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 
 contract ServiceManager {
-    //    TODO: register operator, deregister operator, create task, respond to task
+    // TODO: createNewTask is permissionless so open to griefing - add a whitelist of operators that can create tasks? consider?
+    // TODO: add task expiry - currently commented out
+    // TODO: add slashing logic, and rewards
 
     using ECDSA for bytes32; // manipulate signatures and hashes
 
-    // state variables
+    // config
+    IStrategyManager public immutable strategyManager;
+    IStrategy[] public countedStrategies; // strategies we count toward the threshold
+    uint256 public immutable MIN_STAKE;
     address public immutable avsDirectory; // mainnet address - set in constructor
-    uint32 public lastestTaskNumber; // incremented when a new task is created
+
+    // state variables
+    uint32 public latestTaskNumber; // incremented when a new task is created
     mapping(address => bool) public operatorRegistered; // registered to AVS
     mapping(uint32 => bytes32) public allTaskHashes;
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
@@ -34,8 +42,19 @@ contract ServiceManager {
     }
 
     // constructor
-    constructor(address _avsDirectory) {
+    constructor(
+        address _avsDirectory,
+        address _strategyManager,
+        address[] memory _strategies, // stETH
+        uint256 _minStakeWei
+    ) {
         avsDirectory = _avsDirectory;
+        strategyManager = IStrategyManager(_strategyManager);
+        MIN_STAKE = _minStakeWei;
+
+        for (uint256 i = 0; i < _strategies.length; ++i) {
+            countedStrategies.push(IStrategy(_strategies[i]));
+        }
     }
 
     // register operator - IAVSDirectory will register operator to this AVS
@@ -43,6 +62,8 @@ contract ServiceManager {
         address operator,
         ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry memory operatorSignature
     ) external {
+        require(meetsStakeThreshold(operator), "operator: insufficient stake");
+
         IAVSDirectory(avsDirectory).registerOperatorToAVS(operator, operatorSignature);
         operatorRegistered[operator] = true;
     }
@@ -60,9 +81,9 @@ contract ServiceManager {
         Task memory newTask = Task({contents: contents, taskCreatedBlock: uint32(block.number)});
 
         // store hash of task onchain, emit event and increase task number
-        allTaskHashes[lastestTaskNumber] = keccak256(abi.encode(newTask));
-        emit NewTaskCreated(lastestTaskNumber, newTask);
-        lastestTaskNumber++;
+        allTaskHashes[latestTaskNumber] = keccak256(abi.encode(newTask));
+        emit NewTaskCreated(latestTaskNumber, newTask);
+        latestTaskNumber++;
 
         return newTask;
     }
@@ -72,6 +93,7 @@ contract ServiceManager {
         external
         onlyRegisteredOperator
     {
+        require(meetsStakeThreshold(msg.sender), "stake below minimum");
         // check that task is valid, hasnt been responded to yet
         require(
             keccak256(abi.encode(task)) == allTaskHashes[taskIndex],
@@ -80,18 +102,47 @@ contract ServiceManager {
         require(allTaskResponses[msg.sender][taskIndex].length == 0, "task already responded to");
         // require(block.number <= task.taskCreatedBlock + 100, "task expired");
 
-        // the message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked(isSafe, task.contents));
+        bytes32 digest = keccak256(abi.encodePacked(isSafe, task.contents)).toEthSignedMessageHash();
 
-        // make sure it was signed by the operator thats calling this function
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        if (ethSignedMessageHash.recover(signature) != msg.sender) {
-            revert("Signature does not match");
-        } // check gas cost and change to require
+        if (digest.recover(signature) != msg.sender) {
+            // 1271 fallback path
+            (bool ok, bytes memory ret) =
+                msg.sender.staticcall(abi.encodeWithSignature("isValidSignature(bytes32,bytes)", digest, signature));
+            require(ok, "1271 call failed");
+
+            bytes4 magic; // accept valid signatures from every EIP-1271 wallet
+            if (ret.length == 32) magic = abi.decode(ret, (bytes4)); // slice first 4 bytes
+
+            else if (ret.length == 4) magic = bytes4(ret); // already sized
+
+            else revert("unexpected 1271 return");
+            require(magic == 0x1626ba7e, "bad 1271 signature");
+        }
 
         // update storage with task response
         allTaskResponses[msg.sender][taskIndex] = signature;
 
         emit TaskResponsed(taskIndex, task, isSafe, msg.sender);
+    }
+
+    // shares -> underlying ETH
+
+    function currentUnderlying(address operator) internal view returns (uint256 total) {
+        uint256 length = countedStrategies.length;
+        for (uint256 i = 0; i < length; ++i) {
+            IStrategy strat = countedStrategies[i];
+
+            // amount of shares this operator owns in this strategy
+            uint256 shares = strategyManager.stakerDepositShares(operator, strat);
+
+            // convert shares to the ETH-denominated “underlying” value
+            total += strat.sharesToUnderlying(shares);
+        }
+        return total;
+    }
+
+    // threshold gate
+    function meetsStakeThreshold(address operator) internal view returns (bool) {
+        return currentUnderlying(operator) >= MIN_STAKE;
     }
 }
