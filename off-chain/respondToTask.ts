@@ -15,7 +15,7 @@ type Task = {
 
 // add abi
 const abi = parseAbi([
-  'function respondToTask((string contents, uint32 taskCreatedBlock) task, uint32 referenceTaskIndex, bool isSafe, bytes memory signature) external',
+  'function respondToTask((string,uint32) task, uint32 taskIndex, bytes signature, bool isSafe) external',
   'event NewTaskCreated(uint32 indexed taskIndex, (string contents, uint32 taskCreatedBlock) task)'
 ]);
 
@@ -61,7 +61,7 @@ async function respondToTask(
       address: contractAddress,
       abi,
       functionName: 'respondToTask',
-      args: [task, taskIndex, isSafe, signature],
+      args: [task, taskIndex, signature, isSafe],
       account: account.address,
     });
 
@@ -100,11 +100,10 @@ async function main() {
     event: parseAbiItem('event NewTaskCreated(uint32 indexed taskIndex, (string contents, uint32 taskCreatedBlock) task)') as AbiEvent,
     onLogs: async (logs) => {
       for (const log of logs) {
-        const { args } = log;
-        if (!args) continue;
 
-        const taskIndex = Number(args.taskIndex);
-        const task = args.task as Task;
+      const args = log.args as any
+      const taskIndex = Number(args.taskIndex as bigint)
+      const task = args.task as Task
 
         console.log('New task detected:', {
           taskIndex,
