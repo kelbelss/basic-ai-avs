@@ -113,7 +113,7 @@ contract ECDSAStakeRegistry is IERC1271 {
         _validateThresholdStake(weight);
     }
 
-    // EIP-1271 lets the contracts act like wallets: other contracts can call isValidSignature to accept or reject arbitrary data signatures
+    // EIP-1271 lets the contracts act like wallets -> other contracts can call isValidSignature to accept or reject arbitrary data signatures
     // ensure any on-chain signature checks automatically enforce the stake rule
     function isValidSignature(bytes32 hash, bytes memory signature) public view override returns (bytes4) {
         address signer = hash.toEthSignedMessageHash().recover(signature);
