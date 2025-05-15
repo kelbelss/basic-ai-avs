@@ -7,17 +7,33 @@ import {MockAVSDirectory} from "./mocks/MockAVSDirectory.sol";
 import {ISignatureUtilsMixinTypes} from
     "../../lib/eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
+import {MockStrategyManager, MockStrategy} from "./mocks/MockStrategyManager.sol";
 
 contract ServiceManagerUnitTest is Test {
     MockAVSDirectory mockAvs;
     ServiceManager serviceManager;
+    MockStrategyManager mockStrategyManager;
+    MockStrategy mockStrategy;
+
+    uint256 constant MIN_STAKE = 1 ether;
 
     address operator = vm.addr(1);
 
     function setUp() public {
-        // deploy mock directory and ServiceManager under test
+        // deploy mock directory and ServiceManager
         mockAvs = new MockAVSDirectory();
         serviceManager = new ServiceManager(address(mockAvs));
+        mockStrategyManager = new MockStrategyManager();
+        mockStrategy = new MockStrategy();
+
+        // give the operator some “stake” (in shares == wei for mock)
+        mockStrategyManager.setShares(operator, address(mockStrategy), 2 ether);
+
+        // Build the strategy list
+        address[] memory strategies;
+        strategies[0] = address(mockStrategy);
+
+        serviceManager = new ServiceManager(address(mockAvs), address(mockStrategyManager), strategies, MIN_STAKE);
     }
 
     function testRegisterOperatorToAvs() public {
@@ -64,7 +80,7 @@ contract ServiceManagerUnitTest is Test {
         assertEq(serviceManager.allTaskHashes(uint32(0)), expectedHash, "allTaskHashes[0] mismatch");
 
         // assert latestTaskNumber ++
-        assertEq(uint256(serviceManager.lastestTaskNumber()), 1, "lastestTaskNumber should be 1");
+        assertEq(uint256(serviceManager.latestTaskNumber()), 1, "latestTaskNumber should be 1");
     }
 
     function testRespondToTask() public {
