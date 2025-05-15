@@ -127,7 +127,7 @@ contract ServiceManager {
 
     // shares -> underlying ETH
 
-    function currentUnderlying(address operator) internal view returns (uint256 total) {
+    function currentUnderlying(address operator) internal returns (uint256 total) {
         uint256 length = countedStrategies.length;
         for (uint256 i = 0; i < length; ++i) {
             IStrategy strat = countedStrategies[i];
@@ -142,7 +142,7 @@ contract ServiceManager {
     }
 
     // threshold gate
-    function meetsStakeThreshold(address operator) internal view returns (bool) {
+    function meetsStakeThreshold(address operator) internal returns (bool) {
         return currentUnderlying(operator) >= MIN_STAKE;
     }
 }
