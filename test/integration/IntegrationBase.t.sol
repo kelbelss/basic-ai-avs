@@ -20,7 +20,8 @@ contract IntegrationBase is Test {
     IStrategy STETH_STRAT;
     address STETH_WHALE;
 
-    uint256 FAUCET_AMOUNT = 1e17; // 0.1 stETH
+    uint256 FAUCET_AMOUNT = 2e18; // 1 stETH
+    uint256 constant MIN_STAKE = 1 ether;
 
     ServiceManager serviceManager;
 
@@ -38,7 +39,8 @@ contract IntegrationBase is Test {
         operator = vm.envAddress("SIMPLE_OPERATOR");
 
         // 2) fund the operator with some eth
-        vm.deal(operator, 1e18); // 1 eth
+        // operator = ;
+        vm.deal(operator, 2e18); // 2 eth
         vm.makePersistent(operator);
 
         // 3) fork Holesky
@@ -58,7 +60,10 @@ contract IntegrationBase is Test {
         IDelegationManager(DELEGATION_MANAGER).registerAsOperator(operator, 1, "");
         vm.stopPrank();
 
+        address[] memory strategies = new address[](1);
+        strategies[0] = address(IStrategy(STETH_STRAT));
+
         // 7) deploy AVS ServiceManager pointing at the real AVSDirectory
-        serviceManager = new ServiceManager(AVS_DIRECTORY);
+        serviceManager = new ServiceManager(AVS_DIRECTORY, STRATEGY_MANAGER, strategies, MIN_STAKE);
     }
 }

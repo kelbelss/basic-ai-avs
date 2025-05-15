@@ -22,7 +22,7 @@ contract ServiceManagerUnitTest is Test {
     function setUp() public {
         // deploy mock directory and ServiceManager
         mockAvs = new MockAVSDirectory();
-        serviceManager = new ServiceManager(address(mockAvs));
+        // serviceManager = new ServiceManager(address(mockAvs));
         mockStrategyManager = new MockStrategyManager();
         mockStrategy = new MockStrategy();
 
@@ -30,7 +30,7 @@ contract ServiceManagerUnitTest is Test {
         mockStrategyManager.setShares(operator, address(mockStrategy), 2 ether);
 
         // Build the strategy list
-        address[] memory strategies;
+        address[] memory strategies = new address[](1);
         strategies[0] = address(mockStrategy);
 
         serviceManager = new ServiceManager(address(mockAvs), address(mockStrategyManager), strategies, MIN_STAKE);
