@@ -6,7 +6,7 @@ _A personal learning playground for EigenLayer & AVS development._
 
 This repo implements a minimal AVS that turns on-chain text into a moderation task secured by EigenLayer restaked operators. The goal is not production readiness but to understand how the EigenLayer core contracts, operator life-cycle, slashing, and reward accounting fit together.
 
-### High‑level flow
+### High‑level flow
 
 Task creation - Any user calls `createNewTask(string)` on ServiceManager. The call emits NewTaskCreated with a struct hash kept on‑chain.
 
@@ -23,7 +23,4 @@ On‑chain verification - ServiceManager checks:
 - Slashing: missed deadlines trigger IEigenLayerSlasher.slash()
 - Redistribution: slashed funds flow to Redistributor.sol 
 - Rewards: integrate the EigenLayer Rewards Coordinator
-
-
-
 
